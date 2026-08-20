@@ -1,6 +1,7 @@
 ---
 name: kimi-cli-runtime
 description: Reference for the kimi companion script and Kimi Code CLI flags. Use when running, monitoring, or interpreting kimi review/rescue jobs from Claude Code, or when parsing kimi stream-json output.
+user-invocable: false
 ---
 
 # Kimi CLI runtime
