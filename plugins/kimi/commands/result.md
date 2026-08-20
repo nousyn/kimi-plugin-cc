@@ -1,7 +1,7 @@
 ---
 description: Print the final answer of a finished Kimi companion job
 argument-hint: "[jobId]"
-allowed-tools: Bash(node *)
+allowed-tools: Bash(node:*)
 ---
 
 Fetch the result of a Kimi companion job.

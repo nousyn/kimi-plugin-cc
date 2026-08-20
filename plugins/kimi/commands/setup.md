@@ -1,7 +1,7 @@
 ---
 description: Check that the Kimi Code CLI is installed, authenticated, and ready
 argument-hint: ""
-allowed-tools: Bash(node *)
+allowed-tools: Bash(node:*)
 ---
 
 Run the Kimi companion setup check:

@@ -52,6 +52,13 @@ test('extractSessionId finds common field shapes', () => {
   assert.equal(extractSessionId('{"type":"assistant","content":"hi"}'), null);
 });
 
+test('extractSessionId falls back to the plain-text resume hint', () => {
+  const raw = 'Some review output\n\nTo resume this session: kimi -r session_cb479423-1706-4729-a0aa-676072a94a8a\n';
+  assert.equal(extractSessionId(raw), 'session_cb479423-1706-4729-a0aa-676072a94a8a');
+  assert.equal(extractSessionId('continue with kimi --session 01HZXYZ'), '01HZXYZ');
+  assert.equal(extractSessionId('no hint here'), null);
+});
+
 test('renderJobsTable renders header, separator, and rows', () => {
   const table = renderJobsTable([
     {

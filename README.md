@@ -87,8 +87,8 @@
 
 ## 工作原理
 
-- 前台运行（默认，或 `--wait`）实时透传 kimi 的 stdout，同时写入该 job 的输出文件。
-- 后台运行（`--background`）以 `--output-format stream-json` 拉起一个 detached 的 kimi 进程，登记 job 后立即返回 job id。
+- 前台运行（默认，或 `--wait`）实时透传 kimi 的 stdout/stderr，同时分别写入该 job 的 `output.jsonl` 和 `stderr.log`（stderr 里带有会话续接提示，`--resume` 靠它工作）。
+- 后台运行（`--background`）以 `--output-format stream-json` 拉起一个 detached 的 kimi 进程（独立进程组，`cancel` 按组终止），登记 job 后立即返回 job id。
 - 状态存放在 `<你的仓库>/.kimi-plugin/`（`jobs.json` + `jobs/<id>/output.jsonl`）。不想提交的话把它加进你的 `.gitignore`。
 - `result` 对 stream-json 做防御式解析（逐行解析、跳过畸形行、取最后一条 assistant 文本），失败时回退为原始输出。
 - `status` 会对账真实状态：pid 已不存在的 "running" job 会被标记为已完成。

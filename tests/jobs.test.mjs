@@ -78,3 +78,22 @@ test('pidAlive detects the current process and rejects null', () => {
   assert.equal(pidAlive(null), false);
   assert.equal(pidAlive(0), false);
 });
+
+test('finished jobs are pruned beyond the cap; running jobs are kept', () => {
+  const root = tempRepo();
+  try {
+    for (let i = 0; i < 52; i++) {
+      const job = createJob(root, { cmd: 'review' });
+      updateJob(root, job.id, { status: 'completed' });
+    }
+    const survivor = createJob(root, { cmd: 'rescue' }); // stays running
+    const list = listJobs(root);
+    assert.equal(list.length, 51); // 50 finished + 1 running
+    assert.ok(getJob(root, survivor.id));
+    // pruned job directories are removed from disk
+    const dirs = fs.readdirSync(path.join(stateDir(root), 'jobs'));
+    assert.equal(dirs.length, 51);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

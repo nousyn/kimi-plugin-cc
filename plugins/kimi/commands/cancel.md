@@ -1,7 +1,7 @@
 ---
 description: Cancel a running Kimi companion job
 argument-hint: "[jobId]"
-allowed-tools: Bash(node *)
+allowed-tools: Bash(node:*)
 ---
 
 Cancel a running Kimi companion job.

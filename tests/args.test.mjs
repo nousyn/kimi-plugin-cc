@@ -46,3 +46,27 @@ test('empty argv', () => {
   assert.deepEqual(flags, {});
   assert.deepEqual(positionals, []);
 });
+
+test('flagsFirst keeps --tokens in free text as positionals', () => {
+  const { flags, positionals } = parseArgs(
+    ['--background', 'fix', 'the', '--verbose', 'flag', 'handling'],
+    { valueFlags: ['model'], flagsFirst: true },
+  );
+  assert.deepEqual(flags, { background: true });
+  assert.deepEqual(positionals, ['fix', 'the', '--verbose', 'flag', 'handling']);
+});
+
+test('flagsFirst still parses leading value flags', () => {
+  const { flags, positionals } = parseArgs(['--model', 'k2', 'apply', '--the-fix'], {
+    valueFlags: ['model'],
+    flagsFirst: true,
+  });
+  assert.equal(flags.model, 'k2');
+  assert.deepEqual(positionals, ['apply', '--the-fix']);
+});
+
+test('flagsFirst treats flags after the first positional as text', () => {
+  const { flags, positionals } = parseArgs(['check', 'auth', '--background'], { flagsFirst: true });
+  assert.deepEqual(flags, {});
+  assert.deepEqual(positionals, ['check', 'auth', '--background']);
+});

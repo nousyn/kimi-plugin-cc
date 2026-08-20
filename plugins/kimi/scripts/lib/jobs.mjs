@@ -32,6 +32,9 @@ function load(repoRoot) {
 }
 
 function save(repoRoot, data) {
+  // No file locking: two companion processes writing at the same time can
+  // clobber each other's jobs.json. Accepted ceiling for a local tool —
+  // jobs are recoverable by re-running.
   fs.mkdirSync(stateDir(repoRoot), { recursive: true });
   fs.writeFileSync(jobsFile(repoRoot), JSON.stringify(data, null, 2) + '\n');
 }
@@ -49,10 +52,27 @@ export function createJob(repoRoot, fields = {}) {
     ...fields,
   };
   job.outputFile = path.join(stateDir(repoRoot), 'jobs', job.id, 'output.jsonl');
+  job.stderrFile = path.join(stateDir(repoRoot), 'jobs', job.id, 'stderr.log');
   fs.mkdirSync(path.dirname(job.outputFile), { recursive: true });
   data.jobs.push(job);
+  pruneFinished(data, repoRoot);
   save(repoRoot, data);
   return job;
+}
+
+// Keep the most recent finished jobs; older ones (and their output files) are
+// dropped so jobs.json and the jobs/ directory do not grow without bound.
+// Running jobs are never pruned.
+const MAX_KEPT_FINISHED_JOBS = 50;
+function pruneFinished(data, repoRoot) {
+  const finished = data.jobs.filter((j) => j.status !== 'running'); // oldest first
+  const excess = finished.length - MAX_KEPT_FINISHED_JOBS;
+  if (excess <= 0) return;
+  const dropped = new Set(finished.slice(0, excess).map((j) => j.id));
+  data.jobs = data.jobs.filter((j) => !dropped.has(j.id));
+  for (const id of dropped) {
+    fs.rmSync(path.join(stateDir(repoRoot), 'jobs', id), { recursive: true, force: true });
+  }
 }
 
 // Newest first.

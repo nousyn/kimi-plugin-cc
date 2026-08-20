@@ -60,9 +60,10 @@ async function runJob(repoRoot, { cmd, prompt, background, model, sessionId }) {
     model,
   });
   const job = jobs.createJob(repoRoot, { cmd, sessionId });
+  const stdio = { cwd: repoRoot, outputFile: job.outputFile, stderrFile: job.stderrFile };
 
   if (background) {
-    const { pid } = kimi.runBackground(args, { cwd: repoRoot, outputFile: job.outputFile });
+    const { pid } = kimi.runBackground(args, stdio);
     jobs.updateJob(repoRoot, job.id, { pid });
     console.log(`Started ${cmd} job in the background.`);
     console.log(`Job ID: ${job.id}`);
@@ -71,16 +72,29 @@ async function runJob(repoRoot, { cmd, prompt, background, model, sessionId }) {
     return 0;
   }
 
-  const { pid, done } = kimi.runForeground(args, { cwd: repoRoot, outputFile: job.outputFile });
+  const { pid, done } = kimi.runForeground(args, stdio);
   jobs.updateJob(repoRoot, job.id, { pid });
   const { code } = await done;
-  const raw = fs.existsSync(job.outputFile) ? fs.readFileSync(job.outputFile, 'utf8') : '';
   jobs.updateJob(repoRoot, job.id, {
     status: code === 0 ? 'completed' : 'failed',
     endedAt: new Date().toISOString(),
-    sessionId: extractSessionId(raw) ?? sessionId,
+    sessionId: jobSessionId(job) ?? sessionId,
   });
   return code;
+}
+
+// Session ids show up as a "kimi -r <id>" hint on stderr (foreground text
+// runs) or as stream-json fields on stdout (background runs). Check stderr
+// first: stdout may quote code under review that merely mentions
+// `kimi --session <id>`, which must not win over the real hint.
+function jobSessionId(job) {
+  for (const file of [job.stderrFile, job.outputFile]) {
+    if (file && fs.existsSync(file)) {
+      const id = extractSessionId(fs.readFileSync(file, 'utf8'));
+      if (id) return id;
+    }
+  }
+  return null;
 }
 
 // Reconcile recorded state with reality: a "running" job whose pid is gone has
@@ -90,11 +104,10 @@ function syncJobs(repoRoot) {
   for (const job of jobs.listJobs(repoRoot)) {
     if (job.status !== 'running') continue;
     if (jobs.pidAlive(job.pid)) continue;
-    const raw = fs.existsSync(job.outputFile) ? fs.readFileSync(job.outputFile, 'utf8') : '';
     jobs.updateJob(repoRoot, job.id, {
       status: 'completed',
       endedAt: new Date().toISOString(),
-      sessionId: job.sessionId ?? extractSessionId(raw),
+      sessionId: job.sessionId ?? jobSessionId(job),
     });
   }
 }
@@ -129,7 +142,7 @@ function cmdSetup() {
 }
 
 async function cmdReview(argv, adversarial) {
-  const { flags, positionals } = parseArgs(argv, { valueFlags: ['base', 'model'] });
+  const { flags, positionals } = parseArgs(argv, { valueFlags: ['base', 'model'], flagsFirst: adversarial });
   if (flags.base && !git.isValidRef(flags.base)) {
     console.error(`Invalid --base ref: ${flags.base}`);
     return 1;
@@ -158,7 +171,7 @@ async function cmdReview(argv, adversarial) {
 }
 
 async function cmdRescue(argv) {
-  const { flags, positionals } = parseArgs(argv, { valueFlags: ['model'] });
+  const { flags, positionals } = parseArgs(argv, { valueFlags: ['model'], flagsFirst: true });
   const task = positionals.join(' ').trim();
   if (!task) {
     console.error('Usage: rescue [--background|--wait] [--model <alias>] [--fresh|--resume] <task text...>');
@@ -268,10 +281,21 @@ function cmdCancel(argv) {
     console.error(`Job ${job.id} is not running (status: ${job.status}).`);
     return 1;
   }
+  // Background jobs are detached, so the child leads its own process group;
+  // signal the group first to avoid leaving orphaned grandchildren.
   try {
-    process.kill(job.pid, 'SIGTERM');
-  } catch (err) {
-    console.error(`Could not signal pid ${job.pid}: ${err.message}`);
+    process.kill(-job.pid, 'SIGTERM');
+  } catch {
+    try {
+      process.kill(job.pid, 'SIGTERM');
+    } catch (err) {
+      if (err.code === 'ESRCH') {
+        console.error(`pid ${job.pid} was already gone; marking the job cancelled.`);
+      } else {
+        console.error(`Could not signal pid ${job.pid}: ${err.message}`);
+        return 1;
+      }
+    }
   }
   jobs.updateJob(repoRoot, job.id, { status: 'cancelled', endedAt: new Date().toISOString() });
   console.log(`Cancelled job ${job.id}.`);

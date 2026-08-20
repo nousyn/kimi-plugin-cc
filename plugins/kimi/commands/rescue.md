@@ -1,7 +1,7 @@
 ---
 description: Delegate a debugging, investigation, or implementation task to the Kimi Code CLI
 argument-hint: "[--background|--wait] [--model <alias>] [--fresh|--resume] <what kimi should do>"
-allowed-tools: Bash(node *)
+allowed-tools: Bash(node:*)
 ---
 
 Hand a task to the Kimi Code CLI through the companion script.

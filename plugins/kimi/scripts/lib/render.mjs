@@ -63,12 +63,15 @@ export function extractFinalText(raw) {
 }
 
 // Best-effort session id extraction for `kimi --session <id>` continuation.
+// Checks stream-json fields first; in plain-text output (foreground runs)
+// kimi prints a "To resume this session: kimi -r <id>" hint — grab that too.
 export function extractSessionId(raw) {
   for (const obj of parseLines(raw)) {
     const id = obj.session_id ?? obj.sessionId ?? (obj.session && obj.session.id);
     if (typeof id === 'string' && id) return id;
   }
-  return null;
+  const match = raw.match(/kimi\s+(?:-r|--resume|--session)\s+([A-Za-z0-9_-]+)/);
+  return match ? match[1] : null;
 }
 
 // Review jobs are prompted to end with a fenced ```json block conforming to
@@ -128,10 +131,6 @@ function formatDuration(start, end) {
   return `${Math.floor(m / 60)}h ${m % 60}m`;
 }
 
-function displayStatus(job) {
-  return job.status === 'running' ? 'running' : job.status;
-}
-
 // Plain-text table of jobs. Columns: ID, COMMAND, STATUS, PID, STARTED, DURATION.
 export function renderJobsTable(jobs) {
   if (!jobs.length) return 'No jobs found.';
@@ -139,7 +138,7 @@ export function renderJobsTable(jobs) {
   const rows = jobs.map((j) => [
     j.id,
     j.cmd,
-    displayStatus(j),
+    j.status,
     String(j.pid ?? '-'),
     j.startedAt,
     formatDuration(j.startedAt, j.endedAt ?? new Date().toISOString()),

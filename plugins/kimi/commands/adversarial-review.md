@@ -1,7 +1,7 @@
 ---
 description: Run a read-only adversarial Kimi review that challenges the design of local git changes
 argument-hint: "[--base <ref>] [--background|--wait] [--model <alias>] [what to focus the attack on]"
-allowed-tools: Bash(node *)
+allowed-tools: Bash(node:*)
 ---
 
 Run an adversarial Kimi review through the companion script. Unlike `/kimi:review`, this review challenges assumptions, tradeoffs, and failure modes instead of listing bugs.

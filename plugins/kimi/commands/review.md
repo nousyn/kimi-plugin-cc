@@ -1,7 +1,7 @@
 ---
 description: Run a read-only Kimi code review against local git changes
 argument-hint: "[--base <ref>] [--background|--wait] [--model <alias>]"
-allowed-tools: Bash(node *)
+allowed-tools: Bash(node:*)
 ---
 
 Run a Kimi code review through the companion script.

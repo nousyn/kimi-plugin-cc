@@ -1,7 +1,7 @@
 ---
 description: List Kimi companion jobs for this repository and their state
 argument-hint: "[jobId]"
-allowed-tools: Bash(node *)
+allowed-tools: Bash(node:*)
 ---
 
 Show the status of Kimi companion jobs in this repository.
