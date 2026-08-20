@@ -1,5 +1,8 @@
 {
   "name": "kimi",
   "version": "0.1.0",
-  "description": "Use Kimi Code CLI from inside Claude Code for code reviews and task delegation"
+  "description": "在 Claude Code 中调用本机 Kimi Code CLI 进行代码审查与任务委托",
+  "author": {
+    "name": "Nousyn"
+  }
 }

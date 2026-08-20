@@ -1,18 +1,21 @@
 {
-  "name": "kimi-plugin-cc",
+  "name": "kimi",
   "owner": {
-    "name": "kimi-plugin-cc"
+    "name": "Nousyn"
   },
   "metadata": {
-    "description": "Use Kimi Code CLI from inside Claude Code for code reviews and task delegation.",
+    "description": "在 Claude Code 中调用本机 Kimi Code CLI 进行代码审查与任务委托。",
     "version": "0.1.0"
   },
   "plugins": [
     {
       "name": "kimi",
-      "description": "Use Kimi Code CLI from inside Claude Code for code reviews and task delegation.",
+      "description": "在 Claude Code 中调用本机 Kimi Code CLI 进行代码审查与任务委托。",
       "version": "0.1.0",
-      "source": "./plugins/kimi"
+      "source": "./plugins/kimi",
+      "author": {
+        "name": "Nousyn"
+      }
     }
   ]
 }
