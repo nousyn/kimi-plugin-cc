@@ -111,4 +111,11 @@
 npm test
 ```
 
-运行参数解析、job 存储、stream-json 结果提取的单元测试（node:test，零依赖）。
+运行参数解析、job 存储、stream-json 结果提取等的单元测试（node:test，零依赖）。
+
+发布新版本时同步所有 manifest 的版本号（`plugin.json`、`marketplace.json` 的 `metadata.version` 和 `plugins[kimi].version`）：
+
+```
+node scripts/bump-version.mjs 0.2.0     # 写入
+node scripts/bump-version.mjs --check   # 校验三处一致（可挂 CI）
+```
