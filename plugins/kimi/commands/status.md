@@ -1,6 +1,7 @@
 ---
 description: List Kimi companion jobs for this repository and their state
 argument-hint: "[jobId]"
+disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
 

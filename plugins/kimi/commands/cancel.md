@@ -1,6 +1,7 @@
 ---
 description: Cancel a running Kimi companion job
 argument-hint: "[jobId]"
+disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
 

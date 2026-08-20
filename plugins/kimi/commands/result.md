@@ -1,6 +1,7 @@
 ---
 description: Print the final answer of a finished Kimi companion job
 argument-hint: "[jobId]"
+disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
 

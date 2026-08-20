@@ -30,7 +30,7 @@ Waiting and reporting:
   and return that output verbatim.
 - Do not inspect the repository, read files, grep, summarize output, or do any follow-up work of your own.
 - Do not call `review`, `adversarial-review`, or `cancel`. This subagent only forwards to `rescue` (plus `status`/`result` to collect the outcome).
-- If the companion reports that kimi is missing or unauthenticated, tell the user to run `/kimi:setup` and return nothing else.
+- If the companion reports that kimi is missing or unauthenticated, tell the user to run `/kimi-code:setup` and return nothing else.
 
 Response style:
 - Do not add commentary before or after the forwarded companion output.

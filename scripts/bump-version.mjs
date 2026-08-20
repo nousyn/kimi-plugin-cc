@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Sync the plugin version across the manifests Claude Code actually reads:
 //   plugins/kimi/.claude-plugin/plugin.json -> version
-//   .claude-plugin/marketplace.json         -> metadata.version, plugins[kimi].version
+//   .claude-plugin/marketplace.json         -> metadata.version, plugins[kimi-code].version
 //
 // package.json deliberately has no version field (private, never published)
 // and there is no package-lock.json (zero dependencies), so these three
@@ -17,8 +17,8 @@ import { pathToFileURL } from 'node:url';
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
 function pluginEntry(json) {
-  const entry = json.plugins?.find((p) => p?.name === 'kimi');
-  if (!entry) throw new Error('.claude-plugin/marketplace.json has no plugins entry named "kimi"');
+  const entry = json.plugins?.find((p) => p?.name === 'kimi-code');
+  if (!entry) throw new Error('.claude-plugin/marketplace.json has no plugins entry named "kimi-code"');
   return entry;
 }
 
@@ -44,7 +44,7 @@ function fields(root) {
     },
     {
       file: '.claude-plugin/marketplace.json',
-      label: 'plugins[kimi].version',
+      label: 'plugins[kimi-code].version',
       get: (j) => pluginEntry(j).version,
       set: (j, v) => {
         pluginEntry(j).version = v;

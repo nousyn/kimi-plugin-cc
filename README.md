@@ -16,63 +16,63 @@
 
 ```
 /plugin marketplace add <本仓库路径或 git 地址>
-/plugin install kimi@kimi-plugin-cc
+/plugin install kimi-code@kimi-code
 ```
 
 然后验证一切就绪：
 
 ```
-/kimi:setup
+/kimi-code:setup
 ```
 
 ## 命令一览
 
 | 命令 | 作用 |
 | --- | --- |
-| `/kimi:setup` | 检查 `kimi --version` 和 `kimi doctor`，输出就绪报告 |
-| `/kimi:review` | 对未提交的改动做只读审查（含未跟踪的新文件） |
-| `/kimi:adversarial-review` | 只读的质疑式审查——挑战设计本身，而不是罗列 bug |
-| `/kimi:rescue` | 把任务交给 kimi 执行（**可写**：可能修改文件） |
-| `/kimi:status` | 列出本仓库的 job（id、命令、状态、pid、耗时） |
-| `/kimi:result` | 输出已完成 job 的最终答案 |
-| `/kimi:cancel` | 向运行中的 job 发送 SIGTERM |
+| `/kimi-code:setup` | 检查 `kimi --version` 和 `kimi doctor`，输出就绪报告 |
+| `/kimi-code:review` | 对未提交的改动做只读审查（含未跟踪的新文件） |
+| `/kimi-code:adversarial-review` | 只读的质疑式审查——挑战设计本身，而不是罗列 bug |
+| `/kimi-code:rescue` | 把任务交给 kimi 执行（**可写**：可能修改文件） |
+| `/kimi-code:status` | 列出本仓库的 job（id、命令、状态、pid、耗时） |
+| `/kimi-code:result` | 输出已完成 job 的最终答案 |
+| `/kimi-code:cancel` | 向运行中的 job 发送 SIGTERM |
 
 ### 审查未提交的改动
 
 ```
-/kimi:review
+/kimi-code:review
 ```
 
 审查整个分支相对 `main` 分叉点的全部改动：
 
 ```
-/kimi:review --base main
+/kimi-code:review --base main
 ```
 
 后台运行，稍后取结果：
 
 ```
-/kimi:review --background
-/kimi:status
-/kimi:result
+/kimi-code:review --background
+/kimi-code:status
+/kimi-code:result
 ```
 
 针对具体疑点做质疑式审查，而非泛泛的全面审查：
 
 ```
-/kimi:adversarial-review --base main 重点质疑重试逻辑及其失败模式
+/kimi-code:adversarial-review --base main 重点质疑重试逻辑及其失败模式
 ```
 
 ### 委托一个任务
 
 ```
-/kimi:rescue --background 查清 websocket 重连测试为什么偶发失败并修掉它
+/kimi-code:rescue --background 查清 websocket 重连测试为什么偶发失败并修掉它
 ```
 
 `rescue` 是**可写**的：kimi 以 `-p` 模式运行，普通工具调用会被自动批准，因此它可以修改你仓库里的文件。在本仓库中继续上一次 rescue 会话：
 
 ```
-/kimi:rescue --resume 应用你上次建议的第一个修复
+/kimi-code:rescue --resume 应用你上次建议的第一个修复
 ```
 
 （如果不存在历史会话，会自动转为全新任务并告知你。）
@@ -82,12 +82,14 @@
 `--model <别名>` 对 `review`、`adversarial-review`、`rescue` 均可用：
 
 ```
-/kimi:review --model k2
+/kimi-code:review --model k2
 ```
 
 ## 工作原理
 
-- 前台运行（默认，或 `--wait`）实时透传 kimi 的 stdout/stderr，同时分别写入该 job 的 `output.jsonl` 和 `stderr.log`（stderr 里带有会话续接提示，`--resume` 靠它工作）。
+- 前台运行（`--wait`，脚本层默认）实时透传 kimi 的 stdout/stderr，同时分别写入该 job 的 `output.jsonl` 和 `stderr.log`（stderr 里带有会话续接提示，`--resume` 靠它工作）。
+- review / adversarial-review 命令在未显式给 `--wait`/`--background` 时，会先用 `git diff --shortstat` 估算审查规模并询问一次：仅 1–2 个文件的小审查推荐前台等待，其余推荐后台（前台会阻塞对话直到审查结束）。估算失败或无法询问时默认后台。
+- review、adversarial-review、cancel、result、status 标记了 `disable-model-invocation`：只能由你手动敲斜杠命令触发，Claude 不会自行发起审查消耗额度（rescue 除外——它保留给主会话主动委派）。
 - 后台运行（`--background`）以 `--output-format stream-json` 拉起一个 detached 的 kimi 进程（独立进程组，`cancel` 按组终止），登记 job 后立即返回 job id。
 - 状态存放在 `<你的仓库>/.kimi-plugin/`（`jobs.json` + `jobs/<id>/output.jsonl`）。不想提交的话把它加进你的 `.gitignore`。
 - `result` 对 stream-json 做防御式解析（逐行解析、跳过畸形行、取最后一条 assistant 文本），失败时回退为原始输出。
@@ -113,7 +115,7 @@ npm test
 
 运行参数解析、job 存储、stream-json 结果提取等的单元测试（node:test，零依赖）。
 
-发布新版本时同步所有 manifest 的版本号（`plugin.json`、`marketplace.json` 的 `metadata.version` 和 `plugins[kimi].version`）：
+发布新版本时同步所有 manifest 的版本号（`plugin.json`、`marketplace.json` 的 `metadata.version` 和 `plugins[kimi-code].version`）：
 
 ```
 node scripts/bump-version.mjs 0.2.0     # 写入

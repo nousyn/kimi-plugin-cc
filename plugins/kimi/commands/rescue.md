@@ -25,5 +25,5 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/kimi-companion.mjs" rescue $ARGUMENTS
 ```
 
 - Return the command stdout verbatim, exactly as-is. Do not paraphrase, summarize, or add commentary before or after it.
-- For background runs, tell the user: "Kimi rescue started in the background. Check `/kimi:status` for progress and `/kimi:result` for the outcome."
+- For background runs, tell the user: "Kimi rescue started in the background. Check `/kimi-code:status` for progress and `/kimi-code:result` for the outcome."
 - If the user did not supply a task, ask what Kimi should investigate or do.

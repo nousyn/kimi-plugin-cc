@@ -12,7 +12,7 @@ function makeRoot() {
   fs.mkdirSync(path.join(root, '.claude-plugin'), { recursive: true });
   fs.writeFileSync(
     path.join(root, 'plugins/kimi/.claude-plugin/plugin.json'),
-    JSON.stringify({ name: 'kimi', version: '0.1.0', description: 'x' }, null, 2) + '\n',
+    JSON.stringify({ name: 'kimi-code', version: '0.1.0', description: 'x' }, null, 2) + '\n',
   );
   fs.writeFileSync(
     path.join(root, '.claude-plugin/marketplace.json'),
@@ -20,7 +20,7 @@ function makeRoot() {
       {
         name: 'kimi-plugin-cc',
         metadata: { version: '0.1.0' },
-        plugins: [{ name: 'kimi', version: '0.1.0', source: './plugins/kimi' }],
+        plugins: [{ name: 'kimi-code', version: '0.1.0', source: './plugins/kimi' }],
       },
       null,
       2,
@@ -49,7 +49,7 @@ test('checkVersions reports the drifting field', () => {
     fs.writeFileSync(file, JSON.stringify(json));
     const mismatches = checkVersions(root, '0.1.0');
     assert.equal(mismatches.length, 1);
-    assert.match(mismatches[0], /plugins\[kimi\]\.version: expected 0\.1\.0, found 0\.2\.0/);
+    assert.match(mismatches[0], /plugins\[kimi-code\]\.version: expected 0\.1\.0, found 0\.2\.0/);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
