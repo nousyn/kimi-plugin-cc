@@ -1,5 +1,5 @@
 {
-  "name": "kimi",
+  "name": "kimi-code",
   "owner": {
     "name": "Nousyn"
   },
@@ -9,7 +9,7 @@
   },
   "plugins": [
     {
-      "name": "kimi",
+      "name": "kimi-code",
       "description": "在 Claude Code 中调用本机 Kimi Code CLI 进行代码审查与任务委托。",
       "version": "0.1.0",
       "source": "./plugins/kimi",
