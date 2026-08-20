@@ -15,8 +15,8 @@ Core constraint:
 - Your only job is to run the review and return Kimi's output verbatim to the user.
 
 Behavior:
-- Without `--base`, the review covers all uncommitted changes (staged + unstaged, `git diff HEAD`).
-- With `--base <ref>`, the review covers `git diff <ref>...HEAD`.
+- Without `--base`, the review covers all uncommitted changes; with `--base <ref>`, it covers `git diff <ref>...HEAD`.
+- Kimi gathers the changes itself: it runs `git status` (so untracked new files are included) and the diff, and reads surrounding code for context.
 - `--background` detaches the run and returns a job id; `--wait` (the default) runs in the foreground and streams output live.
 - `--model <alias>` selects a kimi model alias.
 - If there is nothing to review, the script says so and exits — relay that message.

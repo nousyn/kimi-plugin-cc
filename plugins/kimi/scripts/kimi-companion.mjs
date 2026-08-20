@@ -21,7 +21,6 @@ import * as jobs from './lib/jobs.mjs';
 import { extractFinalText, extractSessionId, parseReviewJson, renderJobsTable, renderReview } from './lib/render.mjs';
 
 const PLUGIN_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const MAX_DIFF_BYTES = 200 * 1024;
 
 function ensureKimi() {
   const res = spawnSync('kimi', ['--version'], { encoding: 'utf8' });
@@ -38,17 +37,15 @@ function readPromptTemplate(name) {
   return fs.readFileSync(path.join(PLUGIN_ROOT, 'prompts', name), 'utf8');
 }
 
-function truncateDiff(diff) {
-  if (Buffer.byteLength(diff, 'utf8') <= MAX_DIFF_BYTES) return diff;
-  const cut = Buffer.from(diff, 'utf8').subarray(0, MAX_DIFF_BYTES).toString('utf8');
-  return cut + '\n\n[diff truncated: exceeded 200KB; review the visible portion only]\n';
-}
-
-function buildReviewPrompt({ diff, focus, adversarial }) {
+// The prompt tells kimi to gather the changes itself (git status + diff), so
+// the base ref reaches kimi as a command string inside the prompt, which kimi
+// then runs through its shell tool. Callers must validate the ref with
+// git.isValidRef first so it cannot smuggle shell metacharacters.
+function buildReviewPrompt({ base, focus, adversarial }) {
   const template = readPromptTemplate(adversarial ? 'adversarial-review.md' : 'review.md');
   const schema = fs.readFileSync(path.join(PLUGIN_ROOT, 'schemas', 'review-output.schema.json'), 'utf8').trim();
   return template
-    .replace('{{DIFF}}', () => truncateDiff(diff))
+    .replace('{{DIFF_COMMAND}}', () => (base ? `git diff ${base}...HEAD` : 'git diff HEAD'))
     .replace('{{FOCUS}}', () => focus || '(no specific focus given — challenge everything)')
     .replace('{{SCHEMA}}', () => schema);
 }
@@ -133,16 +130,24 @@ function cmdSetup() {
 
 async function cmdReview(argv, adversarial) {
   const { flags, positionals } = parseArgs(argv, { valueFlags: ['base', 'model'] });
+  if (flags.base && !git.isValidRef(flags.base)) {
+    console.error(`Invalid --base ref: ${flags.base}`);
+    return 1;
+  }
   const repoRoot = git.getRepoRoot();
-  const diff = git.getDiff(repoRoot, flags.base);
-  if (!diff.trim()) {
+  // Early exit so an empty review never burns kimi tokens. Branch review is
+  // diff-based; working-tree review also counts untracked files via status.
+  const hasChanges = flags.base
+    ? Boolean(git.getDiff(repoRoot, flags.base).trim())
+    : git.hasWorkingTreeChanges(repoRoot);
+  if (!hasChanges) {
     const scope = flags.base ? `between ${flags.base}...HEAD` : 'in the working tree';
     console.log(`No changes ${scope} to review. Nothing to do.`);
     return 0;
   }
   const label = adversarial ? 'adversarial-review' : 'review';
   const focus = adversarial ? positionals.join(' ').trim() : '';
-  const prompt = buildReviewPrompt({ diff, focus, adversarial });
+  const prompt = buildReviewPrompt({ base: flags.base ?? null, focus, adversarial });
   return runJob(repoRoot, {
     cmd: label,
     prompt,

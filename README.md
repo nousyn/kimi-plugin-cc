@@ -30,7 +30,7 @@
 | 命令 | 作用 |
 | --- | --- |
 | `/kimi:setup` | 检查 `kimi --version` 和 `kimi doctor`，输出就绪报告 |
-| `/kimi:review` | 对未提交的改动做只读审查（`git diff HEAD`） |
+| `/kimi:review` | 对未提交的改动做只读审查（含未跟踪的新文件） |
 | `/kimi:adversarial-review` | 只读的质疑式审查——挑战设计本身，而不是罗列 bug |
 | `/kimi:rescue` | 把任务交给 kimi 执行（**可写**：可能修改文件） |
 | `/kimi:status` | 列出本仓库的 job（id、命令、状态、pid、耗时） |
@@ -92,6 +92,7 @@
 - 状态存放在 `<你的仓库>/.kimi-plugin/`（`jobs.json` + `jobs/<id>/output.jsonl`）。不想提交的话把它加进你的 `.gitignore`。
 - `result` 对 stream-json 做防御式解析（逐行解析、跳过畸形行、取最后一条 assistant 文本），失败时回退为原始输出。
 - `status` 会对账真实状态：pid 已不存在的 "running" job 会被标记为已完成。
+- 审查目标由 kimi 自己在仓库里收集：它运行 `git status`（因此未跟踪的新文件也在审查范围内）和 `git diff`，并可继续阅读周边代码获取上下文。脚本只在完全无改动时提前退出，避免空审查白白消耗额度。
 - 由于 `kimi -p` 会自动批准普通工具调用，审查的只读约束是在 **prompt 层面**强制的——审查 prompt 明确禁止修改任何文件。
 
 另外还有一个 `kimi-rescue` 子代理供主会话委派：它把任务转发给伴随脚本的 `rescue` 命令，等待或轮询结果后汇报回来。
@@ -99,7 +100,7 @@
 ## 与 codex-plugin-cc 的差异
 
 - **没有 `transfer` 命令**——Kimi Code 没有能导入 Claude Code 会话记录的会话导入器。
-- **没有 effort 等级**——kimi 没有 reasoning effort 概念，只暴露 `--model` 选择。
+- **没有每次运行的 effort 选项**——kimi 的思考强度只能在 `config.toml` 的 `[thinking].effort` 全局配置（k3 系列支持 `low`/`high`/`max`），没有单次运行的 CLI flag，因此插件只暴露 `--model`。
 - **只读审查靠 prompt 约束**——`kimi -p` 以 auto 权限运行且没有独立的沙箱开关，因此由审查 prompt 禁止编辑，而非依赖 CLI 层面的沙箱。
 - **结构化审查输出同样靠 prompt 约束**——codex 使用 `--output-schema`；kimi 没有对应参数，所以审查 prompt 要求回复末尾附带一个符合 `schemas/review-output.schema.json` 的 ```json 代码块，`result` 解析成功时按结构渲染（失败则回退为原始回答）。
 - **更简单的运行时**——没有 app-server 或长连接协议；每个命令都是一次性结束的 `kimi -p` 进程。
